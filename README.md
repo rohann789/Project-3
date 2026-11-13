@@ -128,6 +128,6 @@ Pressing U puts the board and score back to how they were before the last move.
 | `ConsoleViewTest.java` | Wyatt | <!-- TODO --> | Written with Claude (Claude Code) |
 | `ConsoleViewDemo.java` | Wyatt | <!-- TODO --> | Written with Claude (Claude Code) |
 | `GameController.java` | Rohan | Wrote the class refrencing the test plan | got assistance from GPT in makign the class from our spec |
-| `GameLauncher.java` | Matthew | <!-- TODO --> | <!-- TODO --> |
-| `InputHandler.java` | Matthew | <!-- TODO --> | <!-- TODO --> |
+| `GameLauncher.java` | Matthew | Wrote GameLauncher class based on scope from deliverable 2 | No GenAI used|
+| `InputHandler.java` | Matthew | Wrote InputHandler class  | No GenAI used |
 | `README.md` | Arrush | Drafted it; teammates fill in their own rows | Drafted with Claude (Claude Code), then edited |
