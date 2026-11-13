@@ -123,11 +123,11 @@ Pressing U puts the board and score back to how they were before the last move.
 | `TileDeque.java` | Arrush | Wrote it, including the row/column helper (`loadLine`, `writeLine`, `processLine`) | Written with Claude (Claude Code) from our spec, then reviewed and tested |
 | `TileDequeTest.java` | Arrush | Wrote the tests from the Test Plan plus the helper tests | Written with Claude (Claude Code) from our Test Plan |
 | `GameModelTest.java` | Arrush | Wrote the tests from the Test Plan | Written with Claude (Claude Code) from our Test Plan; checked against a temporary GameModel written to the spec |
-| `GameModel.java` | Rohan | <!-- TODO --> | <!-- TODO --> |
+| `GameModel.java` | Rohan | Wrote the class refrencing the test plan | got assistance from GPT in making the class from our spec. |
 | `ConsoleView.java` | Wyatt | <!-- TODO: e.g. reviewed and revised --> | Written with Claude (Claude Code) from our spec |
 | `ConsoleViewTest.java` | Wyatt | <!-- TODO --> | Written with Claude (Claude Code) |
 | `ConsoleViewDemo.java` | Wyatt | <!-- TODO --> | Written with Claude (Claude Code) |
-| `GameController.java` | Matthew | <!-- TODO --> | <!-- TODO --> |
+| `GameController.java` | Rohan | Wrote the class refrencing the test plan | got assistance from GPT in makign the class from our spec |
 | `GameLauncher.java` | Matthew | <!-- TODO --> | <!-- TODO --> |
 | `InputHandler.java` | Matthew | <!-- TODO --> | <!-- TODO --> |
 | `README.md` | Arrush | Drafted it; teammates fill in their own rows | Drafted with Claude (Claude Code), then edited |
