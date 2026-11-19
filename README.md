@@ -136,13 +136,16 @@ Pressing U puts the board and score back to how they were before the last move.
 
 ### Reflection
 **How did your design absorb the change?**
-Not much changed between deliverables this week. Our group went above and beyond for prototype 1 to the point that the only thing missing for prototype 2 was a single test class, which our design had no problem absorbing.
+- Not much changed between deliverables this week. Our group went above and beyond for prototype 1 to the point that the only thing missing for prototype 2 was a single test class, which our design had no problem absorbing.
+
 **Did the change cross the model/view line? Did the view have to learn anything new about the model?** 
-The MVC line is the same as it was before, and knows the same amount.
+- The MVC line is the same as it was before, and knows the same amount.
+
 **What changed from your D3 plan? Features, signatures, validation, or tests that differ from what you said you'd do, and why.**
-We currently plan to implement more stretch goals than we initially planned, such as undo and endless mode, as we have more time on our hands than anticipated.
+- We currently plan to implement more stretch goals than we initially planned, such as undo and endless mode, as we have more time on our hands than anticipated.
+
 **What doesn't work yet? MVP features, bad-input cases, or tests that are missing or failing.**
-The only core MVP feature inactive that we're currently aware of is the console clearing after each move, which should be relatively simple. Beyond that, all we need to do is implement stretch goals.
+- The only core MVP feature inactive that we're currently aware of is the console clearing after each move, which should be relatively simple. Beyond that, all we need to do is implement stretch goals.
 
 ### Next Steps
 **What's left**
