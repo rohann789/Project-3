@@ -6,13 +6,15 @@ import student.TestCase;
  * systemOut() and input is faked with setSystemIn(), so no one has to type.
  *
  * @author Wyatt
- * @version Nov 13, 2026
+ * @version Nov 19, 2026
  */
 public class ConsoleViewTest
     extends TestCase
 {
+    /**
+     * the view to test with
+     */
     private ConsoleView view;
-
 
     // ----------------------------------------------------------
     /**
@@ -25,8 +27,11 @@ public class ConsoleViewTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Returns everything printed since the last clear.
+     *
+     * @return the captured output
      */
     private String printed()
     {
@@ -35,9 +40,31 @@ public class ConsoleViewTest
 
 
     // ----------------------------------------------------------
-    // displayBoard(int[][] board)
-    // ----------------------------------------------------------
+    /**
+     * Asserts that displayBoard(board) throws IllegalArgumentException and
+     * prints nothing.
+     *
+     * @param board
+     *            the invalid board
+     */
+    private void assertDisplayBoardThrows(int[][] board)
+    {
+        Exception thrown = null;
+        try
+        {
+            view.displayBoard(board);
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+        assertEquals("", printed());
+    }
 
+
+    // ----------------------------------------------------------
     /**
      * Normal: every tile is printed and empty cells show as dots.
      */
@@ -57,6 +84,7 @@ public class ConsoleViewTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: every printed line is the same width, so the grid lines up
      * even with 4-digit tiles.
@@ -76,54 +104,34 @@ public class ConsoleViewTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: a null board throws IllegalArgumentException.
      */
     public void testDisplayBoardNull()
     {
-        try
-        {
-            view.displayBoard(null);
-            fail("Expected IllegalArgumentException");
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertEquals("", printed());
-        }
+        assertDisplayBoardThrows(null);
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: a 3x4 board or a board with a short row throws
      * IllegalArgumentException.
      */
     public void testDisplayBoardWrongSize()
     {
+        assertDisplayBoardThrows(new int[3][4]);
+
         int[][] shortRow = new int[4][4];
         shortRow[2] = new int[3];
-        int[][][] badBoards = { new int[3][4], shortRow };
-        for (int[][] board : badBoards)
-        {
-            try
-            {
-                view.displayBoard(board);
-                fail("Expected IllegalArgumentException");
-            }
-            catch (IllegalArgumentException e)
-            {
-                // expected
-            }
-        }
-        assertEquals("", printed());
+        assertDisplayBoardThrows(shortRow);
     }
 
 
     // ----------------------------------------------------------
-    // Messages
-    // ----------------------------------------------------------
-
     /**
-     * Normal: displayMessage prints the message on its own line.
+     * Normal: displayMessage() prints the message on its own line.
      */
     public void testDisplayMessage()
     {
@@ -132,23 +140,29 @@ public class ConsoleViewTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: a null message throws IllegalArgumentException.
+     * Bad input: a null message throws IllegalArgumentException and prints
+     * nothing.
      */
     public void testDisplayMessageNull()
     {
+        Exception thrown = null;
         try
         {
             view.displayMessage(null);
-            fail("Expected IllegalArgumentException");
         }
-        catch (IllegalArgumentException e)
+        catch (Exception e)
         {
-            assertEquals("", printed());
+            thrown = e;
         }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+        assertEquals("", printed());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: the win, game over, and score messages print.
      */
@@ -167,8 +181,9 @@ public class ConsoleViewTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: clearScreen prints the ANSI clear code.
+     * Normal: clearScreen() prints the ANSI clear code.
      */
     public void testClearScreen()
     {
@@ -178,11 +193,9 @@ public class ConsoleViewTest
 
 
     // ----------------------------------------------------------
-    // getInput()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: returns each line the player types, with a prompt.
+     * Normal: getInput() returns each line the player types, after a
+     * prompt that lists the commands.
      */
     public void testGetInput()
     {
@@ -191,12 +204,14 @@ public class ConsoleViewTest
         assertEquals("w", view.getInput());
         assertEquals("D", view.getInput());
         assertTrue(printed().contains("W/A/S/D"));
+        assertTrue(printed().contains("U to undo"));
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: when the input stream ends, it returns null instead of
-     * crashing.
+     * Bad input: when the input stream ends, getInput() returns null
+     * instead of crashing.
      */
     public void testGetInputEndOfStream()
     {

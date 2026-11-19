@@ -1,76 +1,115 @@
 import student.TestCase;
 
+// -------------------------------------------------------------------------
 /**
- * Tests the GameController class for the 2048 game.
+ * Tests the GameController class for the 2048 game, using a fake model and
+ * a fake view so each test controls exactly what happens.
  *
  * @author Rohan
- * @version Nov 13, 2026
+ * @version Nov 19, 2026
  */
-public class GameControllerTest extends TestCase {
-
+public class GameControllerTest
+    extends TestCase
+{
+    /**
+     * fake model the controller talks to
+     */
     private FakeModel model;
+    /**
+     * fake view that records what the controller shows
+     */
     private FakeView view;
+    /**
+     * the controller to test
+     */
     private GameController controller;
 
+    // ----------------------------------------------------------
     /**
-     * Sets up the controller before each test.
+     * Sets up a controller with a fresh fake model and view before each
+     * test.
      */
-    public void setUp() {
+    public void setUp()
+    {
         model = new FakeModel();
         view = new FakeView();
         controller = new GameController(model, view);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests a normal constructor.
+     * Asserts that building a controller from the given model and view
+     * throws IllegalArgumentException.
+     *
+     * @param badModel
+     *            the model to pass
+     * @param badView
+     *            the view to pass
      */
-    public void testConstructor() {
+    private void assertConstructorThrows(GameModel badModel,
+        ConsoleView badView)
+    {
+        Exception thrown = null;
+        try
+        {
+            new GameController(badModel, badView);
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+    }
+
+
+    // ----------------------------------------------------------
+    /**
+     * Normal: the constructor builds a controller.
+     */
+    public void testConstructor()
+    {
         assertNotNull(controller);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests a null model.
+     * Bad input: a null model throws IllegalArgumentException.
      */
-    public void testNullModel() {
-        try {
-            new GameController(null, view);
-            fail("Expected exception");
-        }
-        catch (IllegalArgumentException e) {
-            // Expected
-        }
+    public void testNullModel()
+    {
+        assertConstructorThrows(null, view);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests a null view.
+     * Bad input: a null view throws IllegalArgumentException.
      */
-    public void testNullView() {
-        try {
-            new GameController(model, null);
-            fail("Expected exception");
-        }
-        catch (IllegalArgumentException e) {
-            // Expected
-        }
+    public void testNullView()
+    {
+        assertConstructorThrows(model, null);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests both arguments being null.
+     * Bad input: a null model and view throw IllegalArgumentException.
      */
-    public void testBothNull() {
-        try {
-            new GameController(null, null);
-            fail("Expected exception");
-        }
-        catch (IllegalArgumentException e) {
-            // Expected
-        }
+    public void testBothNull()
+    {
+        assertConstructorThrows(null, null);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests all four valid directions.
+     * Normal: all four directions are passed to the model.
      */
-    public void testValidDirections() {
+    public void testValidDirections()
+    {
         controller.processMove("W");
         assertEquals("W", model.lastDirection);
 
@@ -86,10 +125,13 @@ public class GameControllerTest extends TestCase {
         assertEquals(4, model.moveCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests lowercase input.
+     * Normal: lowercase input is passed to the model as uppercase.
      */
-    public void testLowercaseInput() {
+    public void testLowercaseInput()
+    {
         controller.processMove("w");
         assertEquals("W", model.lastDirection);
 
@@ -103,77 +145,91 @@ public class GameControllerTest extends TestCase {
         assertEquals("D", model.lastDirection);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests spaces around a valid direction.
+     * Normal: spaces around a valid direction are ignored.
      */
-    public void testInputWithSpaces() {
+    public void testInputWithSpaces()
+    {
         controller.processMove("  a  ");
         assertEquals("A", model.lastDirection);
         assertEquals(1, model.moveCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests invalid letters.
+     * Bad input: an invalid letter shows an error and doesn't move.
      */
-    public void testInvalidInput() {
+    public void testInvalidInput()
+    {
         controller.processMove("X");
 
         assertEquals(0, model.moveCount);
-        assertEquals(
-            GameController.INVALID_MESSAGE,
-            view.lastMessage);
+        assertEquals(GameController.INVALID_MESSAGE, view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests an empty input.
+     * Bad input: an empty line shows an error and doesn't move.
      */
-    public void testEmptyInput() {
+    public void testEmptyInput()
+    {
         controller.processMove("");
 
         assertEquals(0, model.moveCount);
-        assertEquals(
-            GameController.INVALID_MESSAGE,
-            view.lastMessage);
+        assertEquals(GameController.INVALID_MESSAGE, view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests spaces without a direction.
+     * Bad input: only spaces shows an error and doesn't move.
      */
-    public void testOnlySpaces() {
+    public void testOnlySpaces()
+    {
         controller.processMove("   ");
 
         assertEquals(0, model.moveCount);
-        assertEquals(
-            GameController.INVALID_MESSAGE,
-            view.lastMessage);
+        assertEquals(GameController.INVALID_MESSAGE, view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests null input.
+     * Bad input: null input shows an error and doesn't move.
      */
-    public void testNullInput() {
+    public void testNullInput()
+    {
         controller.processMove(null);
 
         assertEquals(0, model.moveCount);
         assertEquals("Invalid input.", view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests multiple characters.
+     * Bad input: a valid letter plus extra characters is rejected.
      */
-    public void testMultipleCharacters() {
+    public void testMultipleCharacters()
+    {
         controller.processMove("WA");
 
         assertEquals(0, model.moveCount);
-        assertEquals(
-            GameController.INVALID_MESSAGE,
-            view.lastMessage);
+        assertEquals(GameController.INVALID_MESSAGE, view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests a successful move.
+     * Normal: a move that changes the board clears the screen and redraws
+     * the board and score.
      */
-    public void testSuccessfulMove() {
+    public void testSuccessfulMove()
+    {
         model.moveResult = true;
 
         controller.handleMove("A");
@@ -184,10 +240,14 @@ public class GameControllerTest extends TestCase {
         assertEquals(1, view.clearCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests a move that does not change the board.
+     * Normal: a move that changes nothing doesn't redraw and shows a
+     * message instead.
      */
-    public void testUnsuccessfulMove() {
+    public void testUnsuccessfulMove()
+    {
         model.moveResult = false;
 
         controller.handleMove("A");
@@ -196,15 +256,17 @@ public class GameControllerTest extends TestCase {
         assertEquals(0, view.boardCount);
         assertEquals(0, view.scoreCount);
         assertEquals(0, view.clearCount);
-        assertEquals(
-            "No tiles moved. Try another direction.",
+        assertEquals("No tiles moved. Try another direction.",
             view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests that the board and score are displayed.
+     * Normal: the score shown after a move comes from the model.
      */
-    public void testDisplayAfterMove() {
+    public void testDisplayAfterMove()
+    {
         model.moveResult = true;
         model.score = 16;
 
@@ -216,10 +278,13 @@ public class GameControllerTest extends TestCase {
         assertEquals(1, view.clearCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests startup when the input stream ends.
+     * Bad input: when the input stream ends, the game stops cleanly.
      */
-    public void testStartGameInputEnds() {
+    public void testStartGameInputEnds()
+    {
         view.nextInput = null;
 
         controller.startGame();
@@ -232,10 +297,13 @@ public class GameControllerTest extends TestCase {
         assertEquals("Game ended.", view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests that the game stops when won.
+     * Normal: the game stops and shows the win message when won.
      */
-    public void testStartGameWin() {
+    public void testStartGameWin()
+    {
         model.won = true;
 
         controller.startGame();
@@ -246,10 +314,13 @@ public class GameControllerTest extends TestCase {
         assertEquals(0, view.inputCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests that the game stops when lost.
+     * Normal: the game stops and shows the game over message when lost.
      */
-    public void testStartGameLoss() {
+    public void testStartGameLoss()
+    {
         model.gameOver = true;
 
         controller.startGame();
@@ -260,11 +331,14 @@ public class GameControllerTest extends TestCase {
         assertEquals(0, view.inputCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests the game loop with a successful move.
-     * The fake model ends the game after one move.
+     * Normal: the game loop makes a move, then ends when the fake model
+     * says the game is over.
      */
-    public void testStartGameWithMove() {
+    public void testStartGameWithMove()
+    {
         view.nextInput = "a";
         model.endAfterMove = true;
         model.moveResult = true;
@@ -278,10 +352,13 @@ public class GameControllerTest extends TestCase {
         assertEquals(1, view.gameOverCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests a win that occurs after a move.
+     * Normal: a win right after a move shows the win message.
      */
-    public void testWinAfterMove() {
+    public void testWinAfterMove()
+    {
         view.nextInput = "W";
         model.winAfterMove = true;
 
@@ -292,11 +369,14 @@ public class GameControllerTest extends TestCase {
         assertEquals(0, view.gameOverCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
-     * Tests invalid input during the game loop.
-     * Input ends on the following read.
+     * Bad input: invalid input during the game loop doesn't move, and the
+     * loop asks again until the input ends.
      */
-    public void testInvalidInputDuringGame() {
+    public void testInvalidInputDuringGame()
+    {
         view.nextInput = "X";
 
         controller.startGame();
@@ -306,15 +386,14 @@ public class GameControllerTest extends TestCase {
         assertEquals("Game ended.", view.lastMessage);
     }
 
-    // ----------------------------------------------------------
-    // Undo (D4 change feature)
-    // ----------------------------------------------------------
 
+    // ----------------------------------------------------------
     /**
      * Normal: U calls undo() on the model and redraws the board and score,
      * without making a move.
      */
-    public void testUndoCommand() {
+    public void testUndoCommand()
+    {
         model.undoResult = true;
         model.score = 12;
 
@@ -327,10 +406,13 @@ public class GameControllerTest extends TestCase {
         assertEquals(12, view.lastScore);
     }
 
+
+    // ----------------------------------------------------------
     /**
      * Normal: lowercase u and spaces around it work too.
      */
-    public void testUndoLowercase() {
+    public void testUndoLowercase()
+    {
         model.undoResult = true;
 
         controller.processMove("  u ");
@@ -339,11 +421,14 @@ public class GameControllerTest extends TestCase {
         assertEquals(1, view.boardCount);
     }
 
+
+    // ----------------------------------------------------------
     /**
      * Bad input: U with nothing to undo shows a message and doesn't
      * redraw or crash.
      */
-    public void testUndoNothingToUndo() {
+    public void testUndoNothingToUndo()
+    {
         model.undoResult = false;
 
         controller.processMove("U");
@@ -355,11 +440,14 @@ public class GameControllerTest extends TestCase {
             view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
      * Bad input: U followed by other text is rejected like any other
      * invalid command and doesn't call undo().
      */
-    public void testUndoWithExtraText() {
+    public void testUndoWithExtraText()
+    {
         controller.processMove("undo");
 
         assertEquals(0, model.undoCount);
@@ -367,10 +455,13 @@ public class GameControllerTest extends TestCase {
         assertEquals(GameController.INVALID_MESSAGE, view.lastMessage);
     }
 
+
+    // ----------------------------------------------------------
     /**
      * Normal: undo works inside the game loop and the game keeps going.
      */
-    public void testUndoDuringGame() {
+    public void testUndoDuringGame()
+    {
         model.undoResult = true;
         view.nextInput = "u";
 
@@ -383,119 +474,296 @@ public class GameControllerTest extends TestCase {
         assertEquals("Game ended.", view.lastMessage);
     }
 
-    /**
-     * Fake model used to control test outcomes.
-     */
-    private static class FakeModel extends GameModel {
 
+    // -------------------------------------------------------------------------
+    /**
+     * Fake model used to control test outcomes. It records what the
+     * controller asked for instead of running real game logic.
+     */
+    private static class FakeModel
+        extends GameModel
+    {
+        /**
+         * whether initializeBoard() was called
+         */
         private boolean initialized;
+        /**
+         * value returned by isWon()
+         */
         private boolean won;
+        /**
+         * value returned by isGameOver()
+         */
         private boolean gameOver;
+        /**
+         * value returned by moveTiles()
+         */
         private boolean moveResult = true;
+        /**
+         * whether the game ends after the next move
+         */
         private boolean endAfterMove;
+        /**
+         * whether the game is won after the next move
+         */
         private boolean winAfterMove;
+        /**
+         * number of times moveTiles() was called
+         */
         private int moveCount;
+        /**
+         * value returned by getScore()
+         */
         private int score;
+        /**
+         * last direction passed to moveTiles()
+         */
         private String lastDirection;
+        /**
+         * value returned by undo()
+         */
         private boolean undoResult;
+        /**
+         * number of times undo() was called
+         */
         private int undoCount;
 
+        // ----------------------------------------------------------
+        /**
+         * Records that the board was initialized.
+         */
         @Override
-        public void initializeBoard() {
+        public void initializeBoard()
+        {
             initialized = true;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Records the undo and returns undoResult.
+         *
+         * @return undoResult
+         */
         @Override
-        public boolean undo() {
+        public boolean undo()
+        {
             undoCount++;
             return undoResult;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Records the move and returns moveResult.
+         *
+         * @param direction
+         *            the direction the controller passed
+         * @return moveResult
+         */
         @Override
-        public boolean moveTiles(String direction) {
+        public boolean moveTiles(String direction)
+        {
             lastDirection = direction;
             moveCount++;
 
-            if (endAfterMove) {
+            if (endAfterMove)
+            {
                 gameOver = true;
             }
 
-            if (winAfterMove) {
+            if (winAfterMove)
+            {
                 won = true;
             }
 
             return moveResult;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Returns the gameOver flag.
+         *
+         * @return gameOver
+         */
         @Override
-        public boolean isGameOver() {
+        public boolean isGameOver()
+        {
             return gameOver;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Returns the won flag.
+         *
+         * @return won
+         */
         @Override
-        public boolean isWon() {
+        public boolean isWon()
+        {
             return won;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Returns an empty board.
+         *
+         * @return a new empty 4x4 board
+         */
         @Override
-        public int[][] getBoard() {
+        public int[][] getBoard()
+        {
             return new int[4][4];
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Returns the score field.
+         *
+         * @return score
+         */
         @Override
-        public int getScore() {
+        public int getScore()
+        {
             return score;
         }
     }
 
-    /**
-     * Fake view that records controller output.
-     */
-    private static class FakeView extends ConsoleView {
 
+    // -------------------------------------------------------------------------
+    /**
+     * Fake view that records what the controller shows instead of
+     * printing it.
+     */
+    private static class FakeView
+        extends ConsoleView
+    {
+        /**
+         * last message passed to displayMessage()
+         */
         private String lastMessage;
+        /**
+         * value returned by the next getInput() call; null after that
+         */
         private String nextInput;
+        /**
+         * number of times displayBoard() was called
+         */
         private int boardCount;
+        /**
+         * number of times displayScore() was called
+         */
         private int scoreCount;
+        /**
+         * number of times clearScreen() was called
+         */
         private int clearCount;
+        /**
+         * number of times displayWin() was called
+         */
         private int winCount;
+        /**
+         * number of times displayGameOver() was called
+         */
         private int gameOverCount;
+        /**
+         * number of times getInput() was called
+         */
         private int inputCount;
+        /**
+         * last score passed to displayScore()
+         */
         private int lastScore;
 
+        // ----------------------------------------------------------
+        /**
+         * Counts the board display.
+         *
+         * @param board
+         *            the board the controller passed
+         */
         @Override
-        public void displayBoard(int[][] board) {
+        public void displayBoard(int[][] board)
+        {
             boardCount++;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Counts the score display and records the score.
+         *
+         * @param score
+         *            the score the controller passed
+         */
         @Override
-        public void displayScore(int score) {
+        public void displayScore(int score)
+        {
             scoreCount++;
             lastScore = score;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Counts the screen clear.
+         */
         @Override
-        public void clearScreen() {
+        public void clearScreen()
+        {
             clearCount++;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Records the message.
+         *
+         * @param message
+         *            the message the controller passed
+         */
         @Override
-        public void displayMessage(String message) {
+        public void displayMessage(String message)
+        {
             lastMessage = message;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Counts the win message.
+         */
         @Override
-        public void displayWin() {
+        public void displayWin()
+        {
             winCount++;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Counts the game over message.
+         */
         @Override
-        public void displayGameOver() {
+        public void displayGameOver()
+        {
             gameOverCount++;
         }
 
+
+        // ----------------------------------------------------------
+        /**
+         * Returns nextInput once, then null so the game loop ends.
+         *
+         * @return the fake input
+         */
         @Override
-        public String getInput() {
+        public String getInput()
+        {
             inputCount++;
 
             String result = nextInput;

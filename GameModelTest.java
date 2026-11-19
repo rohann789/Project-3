@@ -4,22 +4,29 @@ import student.TestCase;
 
 // -------------------------------------------------------------------------
 /**
- * Tests for GameModel, following the GameModel section of the Test Plan.
- * Every test builds its board with GameModel(int[][] startBoard, Random rng)
- * and a seeded Random, so the results are always the same. No view,
- * controller, or Scanner is created.
+ * Tests for GameModel, following the GameModel section of the Test Plan,
+ * plus tests for undo. Every test builds its board with
+ * GameModel(int[][] startBoard, Random rng) and a seeded Random, so the
+ * results are always the same. No view, controller, or Scanner is created.
  *
  * @author arrushshah
- * @version Nov 12, 2026
+ * @version Nov 19, 2026
  */
 public class GameModelTest
     extends TestCase
 {
+    /**
+     * seed for the Random, so new tiles always land in the same place
+     */
     private static final long SEED = 2048L;
 
-
+    // ----------------------------------------------------------
     /**
      * Builds a model from a board using a seeded Random.
+     *
+     * @param board
+     *            the starting board
+     * @return the new model
      */
     private GameModel model(int[][] board)
     {
@@ -27,8 +34,11 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Returns an empty 4x4 board.
+     *
+     * @return a new empty board
      */
     private int[][] empty()
     {
@@ -36,8 +46,29 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
+    /**
+     * Returns a full board where no two neighbors match.
+     *
+     * @return a new stuck board
+     */
+    private int[][] stuckBoard()
+    {
+        return new int[][] {
+            { 2, 4, 2, 4 },
+            { 4, 2, 4, 2 },
+            { 2, 4, 2, 4 },
+            { 4, 2, 4, 2 } };
+    }
+
+
+    // ----------------------------------------------------------
     /**
      * Counts the non-empty cells on a board.
+     *
+     * @param board
+     *            the board to count
+     * @return the number of tiles
      */
     private int countTiles(int[][] board)
     {
@@ -56,8 +87,14 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Asserts that two boards hold the same values.
+     *
+     * @param expected
+     *            the expected board
+     * @param actual
+     *            the actual board
      */
     private void assertBoard(int[][] expected, int[][] actual)
     {
@@ -66,23 +103,56 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * A full board where no two neighbors match.
+     * Asserts that building a model from the board throws
+     * IllegalArgumentException.
+     *
+     * @param board
+     *            the invalid starting board
      */
-    private int[][] stuckBoard()
+    private void assertConstructorThrows(int[][] board)
     {
-        return new int[][] {
-            { 2, 4, 2, 4 },
-            { 4, 2, 4, 2 },
-            { 2, 4, 2, 4 },
-            { 4, 2, 4, 2 } };
+        Exception thrown = null;
+        try
+        {
+            model(board);
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
     }
 
 
     // ----------------------------------------------------------
-    // GameModel(int[][] startBoard, Random rng)
-    // ----------------------------------------------------------
+    /**
+     * Asserts that moveTiles(direction) throws IllegalArgumentException.
+     *
+     * @param game
+     *            the model to move
+     * @param direction
+     *            the invalid direction
+     */
+    private void assertMoveThrows(GameModel game, String direction)
+    {
+        Exception thrown = null;
+        try
+        {
+            game.moveTiles(direction);
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+    }
 
+
+    // ----------------------------------------------------------
     /**
      * Normal: a valid 4x4 board is returned by getBoard() and the score is
      * 0.
@@ -98,6 +168,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: the constructor copies the board, so changing the original
      * array afterward doesn't change the model.
@@ -112,23 +183,17 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: a 3x4 board throws IllegalArgumentException.
      */
     public void testConstructorWrongSize()
     {
-        try
-        {
-            model(new int[3][4]);
-            fail("Expected IllegalArgumentException");
-        }
-        catch (IllegalArgumentException e)
-        {
-            // expected
-        }
+        assertConstructorThrows(new int[3][4]);
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: a tile value of 3 throws IllegalArgumentException.
      */
@@ -136,25 +201,14 @@ public class GameModelTest
     {
         int[][] start = empty();
         start[2][2] = 3;
-        try
-        {
-            model(start);
-            fail("Expected IllegalArgumentException");
-        }
-        catch (IllegalArgumentException e)
-        {
-            // expected
-        }
+        assertConstructorThrows(start);
     }
 
 
     // ----------------------------------------------------------
-    // initializeBoard()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: the board has exactly 2 tiles, each a 2 or 4, and the score
-     * is 0.
+     * Normal: initializeBoard() leaves exactly 2 tiles, each a 2 or 4, and
+     * the score is 0.
      */
     public void testInitializeBoard()
     {
@@ -173,6 +227,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: called in the middle of a game with a score of 120, the
      * board resets to 2 tiles and the score resets to 0.
@@ -195,9 +250,6 @@ public class GameModelTest
 
 
     // ----------------------------------------------------------
-    // moveTiles(String direction)
-    // ----------------------------------------------------------
-
     /**
      * Normal: row [2,2,2,_] moved A becomes [4,2,_,_], the score goes up by
      * 4, it returns true, and one new tile appears in an empty spot.
@@ -218,6 +270,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: lowercase directions work the same as uppercase.
      */
@@ -231,6 +284,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: each direction moves tiles toward its own edge.
      */
@@ -257,6 +311,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: [2,2,2,_] moved D becomes [_,_,2,4], because the tiles
      * nearest the right edge merge first.
@@ -274,6 +329,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: 'P' throws IllegalArgumentException, and the board and
      * score don't change.
@@ -283,19 +339,13 @@ public class GameModelTest
         int[][] start = empty();
         start[0] = new int[] { 2, 2, 0, 0 };
         GameModel game = model(start);
-        try
-        {
-            game.moveTiles("P");
-            fail("Expected IllegalArgumentException");
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertBoard(start, game.getBoard());
-            assertEquals(0, game.getScore());
-        }
+        assertMoveThrows(game, "P");
+        assertBoard(start, game.getBoard());
+        assertEquals(0, game.getScore());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Extra case: row [2,2,4,_] moved left becomes [4,4,_,_], not
      * [8,_,_,_] (no double merge).
@@ -313,6 +363,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Extra case: row [2,_,_,_] moved left with nothing else on the board
      * returns false and no new tile spawns.
@@ -329,9 +380,6 @@ public class GameModelTest
 
 
     // ----------------------------------------------------------
-    // isGameOver()
-    // ----------------------------------------------------------
-
     /**
      * Normal: a full board with no matching neighbors is game over.
      */
@@ -341,6 +389,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: a full board with one matching pair next to each other is
      * not game over, because a full board alone isn't a loss.
@@ -348,11 +397,13 @@ public class GameModelTest
     public void testIsGameOverWithMatch()
     {
         int[][] start = stuckBoard();
-        start[3][3] = 4; // now matches the 4 above it
+        // now matches the 4 above it
+        start[3][3] = 4;
         assertFalse(model(start).isGameOver());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: a board with an empty cell is not game over.
      */
@@ -365,9 +416,6 @@ public class GameModelTest
 
 
     // ----------------------------------------------------------
-    // isWon()
-    // ----------------------------------------------------------
-
     /**
      * Normal: a board containing a 2048 tile is won.
      */
@@ -379,8 +427,10 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: a board with two 1024s that haven't merged is not won.
+     * Bad input: a board with two 1024s that haven't merged is not won,
+     * but merging them is.
      */
     public void testIsWonTwo1024s()
     {
@@ -390,18 +440,14 @@ public class GameModelTest
         GameModel game = model(start);
         assertFalse(game.isWon());
 
-        // Merging them reaches 2048.
         game.moveTiles("A");
         assertTrue(game.isWon());
     }
 
 
     // ----------------------------------------------------------
-    // getBoard()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: returns a 4x4 array matching the current board.
+     * Normal: getBoard() returns a 4x4 array matching the current board.
      */
     public void testGetBoard()
     {
@@ -416,9 +462,10 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: editing the returned array doesn't change the model,
-     * because getBoard() returns a copy.
+     * Bad input: editing the array from getBoard() doesn't change the
+     * model, because it returns a copy.
      */
     public void testGetBoardReturnsCopy()
     {
@@ -431,9 +478,6 @@ public class GameModelTest
 
 
     // ----------------------------------------------------------
-    // getScore()
-    // ----------------------------------------------------------
-
     /**
      * Normal: after merging two 4s, the score goes up by 8.
      */
@@ -449,25 +493,23 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: before any move the score is 0, never negative.
+     * Bad input: before any move the score is 0, never negative, and a
+     * move that changes nothing doesn't change it.
      */
     public void testGetScoreBeforeMove()
     {
         GameModel game = model(stuckBoard());
         assertEquals(0, game.getScore());
-        // A move that changes nothing doesn't change the score either.
         assertFalse(game.moveTiles("A"));
         assertEquals(0, game.getScore());
     }
 
 
     // ----------------------------------------------------------
-    // undo() and canUndo() (D4 change feature)
-    // ----------------------------------------------------------
-
     /**
-     * Normal: undo puts back the exact board and score from before the
+     * Normal: undo() puts back the exact board and score from before the
      * move, including removing the tile that spawned.
      */
     public void testUndo()
@@ -484,6 +526,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: several undos step back one move at a time, newest first.
      */
@@ -510,8 +553,9 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: undo before any move returns false and changes nothing.
+     * Bad input: undo() before any move returns false and changes nothing.
      */
     public void testUndoNothingToUndo()
     {
@@ -525,8 +569,9 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: a move that changes nothing isn't recorded, so undo
+     * Bad input: a move that changes nothing isn't recorded, so undo()
      * after it still has nothing to undo.
      */
     public void testUndoIgnoresNoChangeMove()
@@ -540,24 +585,19 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: an invalid direction isn't recorded either.
      */
     public void testUndoIgnoresInvalidDirection()
     {
         GameModel game = model(empty());
-        try
-        {
-            game.moveTiles("P");
-            fail("Expected IllegalArgumentException");
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertFalse(game.canUndo());
-        }
+        assertMoveThrows(game, "P");
+        assertFalse(game.canUndo());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: starting a new game clears the undo history.
      */
@@ -575,6 +615,7 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: undoing the winning merge also undoes the win, and the
      * player can make a different move afterward.
@@ -597,15 +638,17 @@ public class GameModelTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: on a nearly full board, undo restores the exact board and
+     * Normal: on a nearly full board, undo() restores the exact board and
      * the game is not over afterward.
      */
     public void testUndoNearlyFullBoard()
     {
         int[][] start = stuckBoard();
+        // row 3 is now [4, 2, 2, 0]
         start[3][3] = 0;
-        start[3][2] = 2; // row 3 is now [4, 2, 2, 0]
+        start[3][2] = 2;
         GameModel game = model(start);
         assertFalse(game.isGameOver());
 

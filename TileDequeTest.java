@@ -1,4 +1,5 @@
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 import student.TestCase;
 
@@ -8,13 +9,15 @@ import student.TestCase;
  * plus tests for the row/column helper (loadLine, writeLine, processLine).
  *
  * @author arrushshah
- * @version Nov 12, 2026
+ * @version Nov 19, 2026
  */
 public class TileDequeTest
     extends TestCase
 {
+    /**
+     * the deque to test with
+     */
     private TileDeque deque;
-
 
     // ----------------------------------------------------------
     /**
@@ -26,8 +29,12 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Adds each value to the deque in order.
+     * Adds each value to the back of the deque, in order.
+     *
+     * @param values
+     *            the tile values to add
      */
     private void addAll(int... values)
     {
@@ -38,8 +45,11 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Returns the deque's tiles as an array, front to back.
+     *
+     * @return the tiles in order
      */
     private int[] contents()
     {
@@ -48,26 +58,167 @@ public class TileDequeTest
         int i = 0;
         for (int value : copy)
         {
-            result[i++] = value;
+            result[i] = value;
+            i++;
         }
         return result;
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Asserts that two int arrays have the same values.
+     * Asserts that two int arrays hold the same values.
+     *
+     * @param expected
+     *            the expected values
+     * @param actual
+     *            the actual values
      */
     private void assertArray(int[] expected, int[] actual)
     {
-        assertEquals(java.util.Arrays.toString(expected),
-            java.util.Arrays.toString(actual));
+        assertEquals(Arrays.toString(expected), Arrays.toString(actual));
     }
 
 
     // ----------------------------------------------------------
-    // addTile(int value)
-    // ----------------------------------------------------------
+    /**
+     * Returns a 4x4 board for the helper tests.
+     *
+     * @return a new sample board
+     */
+    private int[][] sampleBoard()
+    {
+        return new int[][] {
+            { 2, 0, 2, 4 },
+            { 0, 4, 0, 4 },
+            { 8, 0, 0, 0 },
+            { 8, 2, 0, 2 } };
+    }
 
+
+    // ----------------------------------------------------------
+    /**
+     * Asserts that addTile(value) throws IllegalArgumentException and
+     * leaves the deque unchanged.
+     *
+     * @param value
+     *            the invalid tile value
+     */
+    private void assertAddThrows(int value)
+    {
+        int sizeBefore = deque.size();
+        Exception thrown = null;
+        try
+        {
+            deque.addTile(value);
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+        assertEquals(sizeBefore, deque.size());
+    }
+
+
+    // ----------------------------------------------------------
+    /**
+     * Asserts that removeTile() throws NoSuchElementException.
+     */
+    private void assertRemoveThrows()
+    {
+        Exception thrown = null;
+        try
+        {
+            deque.removeTile();
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof NoSuchElementException);
+    }
+
+
+    // ----------------------------------------------------------
+    /**
+     * Asserts that removeLastTile() throws NoSuchElementException.
+     */
+    private void assertRemoveLastThrows()
+    {
+        Exception thrown = null;
+        try
+        {
+            deque.removeLastTile();
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof NoSuchElementException);
+    }
+
+
+    // ----------------------------------------------------------
+    /**
+     * Asserts that processLine() throws IllegalArgumentException and
+     * leaves the board unchanged.
+     *
+     * @param board
+     *            the board to process
+     * @param index
+     *            the row or column number
+     * @param direction
+     *            the move direction
+     */
+    private void assertProcessThrows(int[][] board, int index,
+        String direction)
+    {
+        String before = Arrays.deepToString(board);
+        Exception thrown = null;
+        try
+        {
+            deque.processLine(board, index, direction);
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+        assertEquals(before, Arrays.deepToString(board));
+    }
+
+
+    // ----------------------------------------------------------
+    /**
+     * Asserts that loadLine() throws IllegalArgumentException.
+     *
+     * @param board
+     *            the board to load from
+     * @param index
+     *            the row or column number
+     */
+    private void assertLoadThrows(int[][] board, int index)
+    {
+        Exception thrown = null;
+        try
+        {
+            deque.loadLine(board, index, "A");
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+    }
+
+
+    // ----------------------------------------------------------
     /**
      * Normal: add 2 then 4, and peekTile() returns 2.
      */
@@ -75,142 +226,124 @@ public class TileDequeTest
     {
         addAll(2, 4);
         assertEquals(2, (int)deque.peekTile());
+        assertEquals(2, deque.size());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: adding 0 (an empty space) throws
      * IllegalArgumentException.
      */
     public void testAddTileZero()
     {
-        try
-        {
-            deque.addTile(0);
-            fail("Expected IllegalArgumentException");
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertTrue(deque.isEmpty());
-        }
+        assertAddThrows(0);
+        assertTrue(deque.isEmpty());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: negative numbers, 1, and non powers of 2 throw
      * IllegalArgumentException.
      */
     public void testAddTileOtherInvalid()
     {
-        int[] badValues = { -2, 1, 3, 6, 100 };
-        for (int value : badValues)
-        {
-            try
-            {
-                deque.addTile(value);
-                fail("Expected IllegalArgumentException for " + value);
-            }
-            catch (IllegalArgumentException e)
-            {
-                // expected
-            }
-        }
+        assertAddThrows(-2);
+        assertAddThrows(1);
+        assertAddThrows(3);
+        assertAddThrows(6);
+        assertAddThrows(100);
         assertTrue(deque.isEmpty());
     }
 
 
     // ----------------------------------------------------------
-    // removeTile()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: after 2 and 4 are added, it returns 2, then 4.
+     * Normal: after 2 and 4 are added, removeTile() returns 2, then 4.
      */
     public void testRemoveTile()
     {
         addAll(2, 4);
         assertEquals(2, (int)deque.removeTile());
         assertEquals(4, (int)deque.removeTile());
+        assertTrue(deque.isEmpty());
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: on an empty deque it throws NoSuchElementException.
+     * Bad input: removeTile() on an empty deque throws
+     * NoSuchElementException.
      */
     public void testRemoveTileEmpty()
     {
-        try
-        {
-            deque.removeTile();
-            fail("Expected NoSuchElementException");
-        }
-        catch (NoSuchElementException e)
-        {
-            // expected
-        }
+        assertRemoveThrows();
     }
 
 
     // ----------------------------------------------------------
-    // removeLastTile()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: after 2 and 4 are added, it returns 4, then 2.
+     * Normal: after 2 and 4 are added, removeLastTile() returns 4, then 2.
      */
     public void testRemoveLastTile()
     {
         addAll(2, 4);
         assertEquals(4, (int)deque.removeLastTile());
         assertEquals(2, (int)deque.removeLastTile());
+        assertTrue(deque.isEmpty());
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: on an empty deque it throws NoSuchElementException.
+     * Bad input: removeLastTile() on an empty deque throws
+     * NoSuchElementException.
      */
     public void testRemoveLastTileEmpty()
     {
-        try
-        {
-            deque.removeLastTile();
-            fail("Expected NoSuchElementException");
-        }
-        catch (NoSuchElementException e)
-        {
-            // expected
-        }
+        assertRemoveLastThrows();
     }
 
 
     // ----------------------------------------------------------
-    // Interleaved adds and removes
-    // ----------------------------------------------------------
-
     /**
      * Normal: mixing adds with removes from both ends keeps the order
      * correct at every step.
      */
     public void testInterleavedAddsAndRemoves()
     {
-        addAll(2, 4);                                   // [2, 4]
-        assertEquals(2, (int)deque.removeTile());       // [4]
-        addAll(8);                                      // [4, 8]
+        addAll(2, 4);
+        // [2, 4]
+        assertEquals(2, (int)deque.removeTile());
+        // [4]
+        addAll(8);
+        // [4, 8]
         assertEquals(4, (int)deque.peekTile());
-        addAll(16);                                     // [4, 8, 16]
-        assertEquals(16, (int)deque.removeLastTile());  // [4, 8]
-        addAll(32, 64);                                 // [4, 8, 32, 64]
-        assertEquals(4, (int)deque.removeTile());       // [8, 32, 64]
-        assertEquals(64, (int)deque.removeLastTile());  // [8, 32]
+        addAll(16);
+        // [4, 8, 16]
+        assertEquals(16, (int)deque.removeLastTile());
+        // [4, 8]
+        addAll(32, 64);
+        // [4, 8, 32, 64]
+        assertEquals(4, (int)deque.removeTile());
+        // [8, 32, 64]
+        assertEquals(64, (int)deque.removeLastTile());
+        // [8, 32]
         assertArray(new int[] { 8, 32 }, contents());
-        assertEquals(8, (int)deque.removeTile());       // [32]
-        assertEquals(32, (int)deque.removeLastTile());  // []
+        assertEquals(8, (int)deque.removeTile());
+        // [32]
+        assertEquals(32, (int)deque.removeLastTile());
+        // []
         assertTrue(deque.isEmpty());
-        addAll(2);                                      // reuse after empty
+
+        // The deque can be reused after being emptied.
+        addAll(2);
         assertEquals(2, (int)deque.peekTile());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: removes after a merge come out in the merged order, and new
      * tiles go behind them.
@@ -218,15 +351,20 @@ public class TileDequeTest
     public void testInterleavedAfterMerge()
     {
         addAll(2, 2, 4);
-        deque.mergeTiles(true);                         // [4, 4]
-        assertEquals(4, (int)deque.removeTile());       // [4]
-        addAll(8);                                      // [4, 8]
-        assertEquals(8, (int)deque.removeLastTile());   // [4]
-        assertEquals(4, (int)deque.removeTile());       // []
+        deque.mergeTiles(true);
+        // [4, 4]
+        assertEquals(4, (int)deque.removeTile());
+        // [4]
+        addAll(8);
+        // [4, 8]
+        assertEquals(8, (int)deque.removeLastTile());
+        // [4]
+        assertEquals(4, (int)deque.removeTile());
         assertTrue(deque.isEmpty());
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: removing past empty in the middle of a sequence throws,
      * and the deque still works afterward.
@@ -235,25 +373,15 @@ public class TileDequeTest
     {
         addAll(2);
         deque.removeLastTile();
-        try
-        {
-            deque.removeTile();
-            fail("Expected NoSuchElementException");
-        }
-        catch (NoSuchElementException e)
-        {
-            addAll(4);
-            assertEquals(4, (int)deque.removeTile());
-        }
+        assertRemoveThrows();
+        addAll(4);
+        assertEquals(4, (int)deque.removeTile());
     }
 
 
     // ----------------------------------------------------------
-    // peekTile()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: returns the front value without removing it.
+     * Normal: peekTile() returns the front value without removing it.
      */
     public void testPeekTile()
     {
@@ -264,8 +392,10 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: on an empty deque it returns null and doesn't crash.
+     * Bad input: peekTile() on an empty deque returns null and doesn't
+     * crash.
      */
     public void testPeekTileEmpty()
     {
@@ -274,11 +404,8 @@ public class TileDequeTest
 
 
     // ----------------------------------------------------------
-    // isEmpty()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: true on a new deque, false after one add.
+     * Normal: isEmpty() is true on a new deque and false after one add.
      */
     public void testIsEmpty()
     {
@@ -288,8 +415,10 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: true again after everything has been removed.
+     * Bad input: isEmpty() is true again after everything has been
+     * removed.
      */
     public void testIsEmptyAfterRemoving()
     {
@@ -301,9 +430,6 @@ public class TileDequeTest
 
 
     // ----------------------------------------------------------
-    // mergeTiles(boolean fromFront)
-    // ----------------------------------------------------------
-
     /**
      * Normal: [2,2,2] becomes [4,2] when processed from the front.
      */
@@ -316,6 +442,7 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: [2,2,4] becomes [4,4], not [8] (no double merge).
      */
@@ -328,6 +455,7 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: processed from the back (right and down moves), [2,2,2]
      * becomes [2,4], because the back tiles merge first.
@@ -340,6 +468,7 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: [4,2,2] from the back becomes [4,4], not [8].
      */
@@ -351,6 +480,7 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: [2,2,2,2] makes two merges and scores 8.
      */
@@ -363,6 +493,7 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: tiles with no matching neighbor are unchanged.
      */
@@ -375,8 +506,9 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: on an empty deque it stays empty and doesn't throw.
+     * Bad input: merging an empty deque leaves it empty and doesn't throw.
      */
     public void testMergeTilesEmpty()
     {
@@ -389,11 +521,8 @@ public class TileDequeTest
 
 
     // ----------------------------------------------------------
-    // getTiles()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: returns the tiles in order after a merge.
+     * Normal: getTiles() returns the tiles in order after a merge.
      */
     public void testGetTiles()
     {
@@ -407,8 +536,10 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: editing the returned deque doesn't change the original.
+     * Bad input: editing the deque returned by getTiles() doesn't change
+     * the original.
      */
     public void testGetTilesReturnsCopy()
     {
@@ -421,11 +552,8 @@ public class TileDequeTest
 
 
     // ----------------------------------------------------------
-    // clear()
-    // ----------------------------------------------------------
-
     /**
-     * Normal: after adding 3 tiles, isEmpty() returns true.
+     * Normal: after adding 3 tiles, clear() empties the deque.
      */
     public void testClear()
     {
@@ -436,6 +564,7 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: clearing an already-empty deque does nothing and doesn't
      * throw.
@@ -448,24 +577,9 @@ public class TileDequeTest
 
 
     // ----------------------------------------------------------
-    // Row/column helper: loadLine, writeLine, processLine
-    // ----------------------------------------------------------
-
     /**
-     * Returns a 4x4 board for the helper tests.
-     */
-    private int[][] sampleBoard()
-    {
-        return new int[][] {
-            { 2, 0, 2, 4 },
-            { 0, 4, 0, 4 },
-            { 8, 0, 0, 0 },
-            { 8, 2, 0, 2 } };
-    }
-
-
-    /**
-     * Normal: a row loads left to right, skipping empty cells.
+     * Normal: loadLine() loads a row left to right, skipping empty cells,
+     * for both row directions.
      */
     public void testLoadLineRow()
     {
@@ -476,8 +590,10 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: a column loads top to bottom, skipping empty cells.
+     * Normal: loadLine() loads a column top to bottom, skipping empty
+     * cells.
      */
     public void testLoadLineColumn()
     {
@@ -488,8 +604,9 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: loading replaces whatever was in the deque before.
+     * Normal: loadLine() replaces whatever was in the deque before.
      */
     public void testLoadLineClearsFirst()
     {
@@ -499,21 +616,23 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: loading doesn't change the board.
+     * Normal: loadLine() doesn't change the board.
      */
     public void testLoadLineLeavesBoard()
     {
         int[][] board = sampleBoard();
         deque.loadLine(board, 3, "D");
-        assertEquals(java.util.Arrays.deepToString(sampleBoard()),
-            java.util.Arrays.deepToString(board));
+        assertEquals(Arrays.deepToString(sampleBoard()),
+            Arrays.deepToString(board));
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: writing a row for A packs tiles to the left and zero-fills
-     * the rest.
+     * Normal: writeLine() for A packs tiles to the left and fills the
+     * rest with 0.
      */
     public void testWriteLineLeft()
     {
@@ -525,8 +644,9 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: writing a row for D packs tiles to the right in the same
+     * Normal: writeLine() for D packs tiles to the right in the same
      * order.
      */
     public void testWriteLineRight()
@@ -538,8 +658,9 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: writing a column for W packs tiles to the top, and for S to
+     * Normal: writeLine() for W packs a column to the top, and for S to
      * the bottom.
      */
     public void testWriteLineColumns()
@@ -561,8 +682,9 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: writing only touches the chosen line.
+     * Normal: writeLine() only changes the chosen line.
      */
     public void testWriteLineOnlyChangesOneLine()
     {
@@ -571,13 +693,37 @@ public class TileDequeTest
         deque.writeLine(board, 2, "A");
         int[][] expected = sampleBoard();
         expected[2] = new int[] { 4, 0, 0, 0 };
-        assertEquals(java.util.Arrays.deepToString(expected),
-            java.util.Arrays.deepToString(board));
+        assertEquals(Arrays.deepToString(expected),
+            Arrays.deepToString(board));
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: processLine works for all four directions on the same
+     * Bad input: writing more tiles than the line holds throws
+     * IllegalArgumentException and keeps the tiles.
+     */
+    public void testWriteLineTooManyTiles()
+    {
+        addAll(2, 4, 8, 16, 32);
+        Exception thrown = null;
+        try
+        {
+            deque.writeLine(sampleBoard(), 0, "A");
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalArgumentException);
+        assertEquals(5, deque.size());
+    }
+
+
+    // ----------------------------------------------------------
+    /**
+     * Normal: processLine() works for all four directions on the same
      * board, using the one helper.
      */
     public void testProcessLineAllDirections()
@@ -606,6 +752,7 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Normal: [2,2,2,_] moved right becomes [_,_,2,4], because the tiles
      * nearest the right edge merge first.
@@ -619,83 +766,43 @@ public class TileDequeTest
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Normal: an empty line stays empty and scores 0.
+     * Normal: processing an empty line leaves it empty and scores 0.
      */
     public void testProcessLineEmpty()
     {
         int[][] board = new int[4][4];
         assertEquals(0, deque.processLine(board, 2, "W"));
-        assertEquals(java.util.Arrays.deepToString(new int[4][4]),
-            java.util.Arrays.deepToString(board));
+        assertEquals(Arrays.deepToString(new int[4][4]),
+            Arrays.deepToString(board));
     }
 
 
+    // ----------------------------------------------------------
     /**
-     * Bad input: an invalid or null direction throws
+     * Bad input: an invalid, empty, or null direction throws
      * IllegalArgumentException and leaves the board alone.
      */
     public void testHelperInvalidDirection()
     {
-        String[] badDirections = { "P", "", "WA", null };
-        for (String dir : badDirections)
-        {
-            int[][] board = sampleBoard();
-            try
-            {
-                deque.processLine(board, 0, dir);
-                fail("Expected IllegalArgumentException for " + dir);
-            }
-            catch (IllegalArgumentException e)
-            {
-                assertEquals(java.util.Arrays.deepToString(sampleBoard()),
-                    java.util.Arrays.deepToString(board));
-            }
-        }
+        assertProcessThrows(sampleBoard(), 0, "P");
+        assertProcessThrows(sampleBoard(), 0, "");
+        assertProcessThrows(sampleBoard(), 0, "WA");
+        assertProcessThrows(sampleBoard(), 0, null);
     }
 
 
+    // ----------------------------------------------------------
     /**
      * Bad input: an out-of-range index, a null board, or a non-square
      * board throws IllegalArgumentException.
      */
     public void testHelperBadBoardOrIndex()
     {
-        Object[][] cases = {
-            { sampleBoard(), 4 },
-            { sampleBoard(), -1 },
-            { null, 0 },
-            { new int[3][4], 0 } };
-        for (Object[] c : cases)
-        {
-            try
-            {
-                deque.loadLine((int[][])c[0], (Integer)c[1], "A");
-                fail("Expected IllegalArgumentException");
-            }
-            catch (IllegalArgumentException e)
-            {
-                // expected
-            }
-        }
-    }
-
-
-    /**
-     * Bad input: writing more tiles than the line holds throws
-     * IllegalArgumentException.
-     */
-    public void testWriteLineTooManyTiles()
-    {
-        addAll(2, 4, 8, 16, 32);
-        try
-        {
-            deque.writeLine(sampleBoard(), 0, "A");
-            fail("Expected IllegalArgumentException");
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertEquals(5, deque.size());
-        }
+        assertLoadThrows(sampleBoard(), 4);
+        assertLoadThrows(sampleBoard(), -1);
+        assertLoadThrows(null, 0);
+        assertLoadThrows(new int[3][4], 0);
     }
 }
