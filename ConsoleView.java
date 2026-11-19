@@ -100,7 +100,7 @@ public class ConsoleView
      */
     public String getInput()
     {
-        System.out.print("Enter a move (W/A/S/D): ");
+        System.out.print("Enter a move (W/A/S/D, U to undo): ");
         if (!input.hasNextLine())
         {
             System.out.println();

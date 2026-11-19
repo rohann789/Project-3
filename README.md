@@ -2,168 +2,149 @@
 
 A console version of 2048 built with MVC. The model (`GameModel` + `TileDeque`) handles the board and rules, the view (`ConsoleView`) prints the board and reads input, and the controller (`GameController`, started by `GameLauncher`) connects them. Each row or column is processed through a deque so the tiles closest to the direction of movement are handled first.
 
-## How to run
+**Controls:** W, A, S, D move the tiles (any capitalization). **U undoes your last move.** Press Enter after each command.
 
-All files are in the repo root. The tests use `student.jar` from CS2-Support.
+## How to compile and run
 
-### Run the model tests (no view needed)
+All files are in the repo root. The tests need `student.jar` from CS2-Support; the game itself doesn't.
 
-In Eclipse: right-click `TileDequeTest.java` or `GameModelTest.java` → **Run As → JUnit Test**.
+### Play the game
 
-From a terminal (replace the path to `student.jar` with yours):
+In Eclipse: right-click `GameLauncher.java` → **Run As → Java Application**.
+
+From a terminal, in the repo folder:
+
+```bash
+javac GameLauncher.java GameController.java GameModel.java TileDeque.java ConsoleView.java
+```
+
+```bash
+java GameLauncher
+```
+
+> The screen clears after each move in macOS Terminal, Linux and Windows Terminal. The Eclipse console ignores the clear code, so there each new board prints below the old one. Use a real terminal for the demo.
+
+### Run the tests
+
+In Eclipse: right-click any `*Test.java` file → **Run As → JUnit Test**.
+
+From a terminal (replace `path/to/student.jar` with yours):
 
 ```bash
 javac -cp path/to/student.jar *.java
-java -cp .:path/to/student.jar org.junit.runner.JUnitCore TileDequeTest GameModelTest
 ```
-
-The tests only use `GameModel` and `TileDeque`. They never create a view, controller, or Scanner.
-
-### Run the thin view
-
-`ConsoleViewDemo` prints hard-coded boards, a score, an invalid-input message, the win and game-over messages, and then reads one command and echoes it back. It doesn't need the model or controller.
-
-In Eclipse: right-click `ConsoleViewDemo.java` → **Run As → Java Application**.
-
-From a terminal:
 
 ```bash
-javac ConsoleView.java ConsoleViewDemo.java
-java ConsoleViewDemo
+java -cp .:path/to/student.jar org.junit.runner.JUnitCore TileDequeTest GameModelTest GameControllerTest ConsoleViewTest InputHandlerTest
 ```
 
-The view tests run the same way as the model tests: `ConsoleViewTest`.
+| Test class | Tests | What it covers |
+|---|---|---|
+| `TileDequeTest` | 39 | Every deque method (normal + bad input), merging from both ends, interleaved adds and removes, and the row/column helper in all four directions |
+| `GameModelTest` | 30 | Every Test Plan case, plus 8 undo tests |
+| `GameControllerTest` | 26 | Input validation, moves, the game loop, and 5 undo tests, using a fake model and fake view |
+| `ConsoleViewTest` | 10 | Board printing and messages, using hard-coded boards |
+| `InputHandlerTest` | 7 | `InputHandler` input checking |
 
-### Run the game
+`TileDequeTest` and `GameModelTest` test the model only: they never create a view, controller, or Scanner. All 112 tests pass.
 
-Run `GameLauncher` (Eclipse: **Run As → Java Application**, or `java GameLauncher` from a terminal). Enter W, A, S, or D and press Enter to move.
+### Run the view on its own
 
-> The screen clears after each move in macOS Terminal, Linux and Windows Terminal. The Eclipse console ignores the clear code, so there each new board prints below the old one.
-
-<!-- TODO before submitting: check that GameLauncher runs once GameModel and GameController are in. -->
+`ConsoleViewDemo` prints hard-coded boards and every message without the model or controller: right-click it → **Run As → Java Application**, or `java ConsoleViewDemo` after compiling.
 
 ## Reflection
 
-### What changed from the spec
+### The change feature: undo
 
-| Area | What the spec said | What we built | Why |
-|---|---|---|---|
-| TileDeque signatures | `addTile`, `removeTile`, `removeLastTile`, `mergeTiles(boolean)`, `getTiles`, `clear`, `peekTile`, `isEmpty` | All of those, plus `getMergeScore()` and `size()` | `mergeTiles` returns nothing, and merging doesn't change the sum of the tiles, so `GameModel` had no way to know how many points a move earned. `getMergeScore()` returns the points from the last merge. `size()` is used to check a line fits before writing it back. |
-| Row/column helper | Revised Scope #3: one helper for rows and columns | `loadLine`, `writeLine`, and `processLine` in `TileDeque` | Rows always load left to right and columns top to bottom. A/W merge and write from the front; D/S merge and write from the back. One method covers all four directions, so `GameModel.moveTiles` is just a loop calling `processLine` for each line. We put it in `TileDeque` instead of `GameModel` so it could be built and tested before `GameModel` existed. |
-| No double merge | Revised Scope #4: a `justMerged` flag | The merge loop removes both tiles of a pair as soon as they merge | Same result ([2,2,4] → [4,4]) without a flag, because a merged tile is never looked at again. |
-| Invalid directions | Method Signatures: `moveTiles("P")` returns false. Test Plan: it throws `IllegalArgumentException`. | Throws `IllegalArgumentException` | The two sections disagreed. We followed the Test Plan, and the controller only passes valid directions anyway. |
-| ConsoleView | `displayBoard`, `displayGameOver`, `displayWin`, `getInput`, `displayMessage` | All of those, plus `clearScreen()` (Revised Scope #1) and `displayScore(int)` | The class design says the view shows the score, but no method in the spec did that. |
-| Input validation | Validation section: a separate `InputHandler` reads input. Method Signatures: `ConsoleView.getInput()` reads input. | <!-- TODO (Matthew): which one did the controller end up using? --> | <!-- TODO --> |
-| Tests | Test Plan: JUnit tests for `GameModel` and `TileDeque` | Every Test Plan case, plus extra tests for the row/column helper and all four directions, and `ConsoleViewTest` for the view | The helper is shared by all four directions, so it needed its own tests. The view tests use hard-coded boards, as the integration plan says. |
+Our D3 Next Steps named **undo** as the non-trivial feature beyond the MVP: pressing U puts the board and score back to how they were before the last move. It's in, and you can undo several moves in a row.
 
-### Did the model really stand alone?
+**How it works.** Before each move, `GameModel.moveTiles` already copied the board to check whether anything moved. Now, when the move does change the board, that copy and the old score are pushed onto two stacks (`boardHistory` and `scoreHistory`). `undo()` pops them back. Moves that change nothing, and invalid directions, are never saved, so U never "undoes" a move that didn't happen. Starting a new game clears the history.
 
-Yes. `TileDeque` and its 36 tests were written and passing before any view or controller code existed. `GameModelTest` only uses `GameModel(int[][] startBoard, Random rng)` with a seeded `Random`, so it never needs input or a screen. `ConsoleView` was also built and tested on its own with hard-coded boards (`ConsoleViewDemo`, `ConsoleViewTest`). Neither side imports the other.
+### Classes the feature touched, compared with our D3 prediction
 
-### What happened to the unknowns from the scope
+| Class | D3 prediction | What actually happened |
+|---|---|---|
+| `GameModel` | Add `undo()` and a history; save state only when a move changes the board | **Matched.** Added `undo()`, `canUndo()`, and two history stacks. `moveTiles` saves the board copy it was already making, and `initializeBoard` clears the history. |
+| `GameController` | Accept U in `processMove` and call `model.undo()` | **Matched.** Added a U case and `handleUndo()`, which redraws on success or says "Nothing to undo yet." |
+| `InputHandler` / `ConsoleView` | Allow U and update the prompt | **Partly matched.** Only the prompt text in `ConsoleView.getInput()` changed. `InputHandler` didn't need to change, because the controller reads input through `ConsoleView` (see below). |
+| `TileDeque` | Should not change | **Matched.** No changes. Undo doesn't touch how a move is processed. |
+| `ConsoleView.displayBoard` | Should not change | **Matched.** It still just prints whatever board it's given. |
+| `GameControllerTest` | Not predicted | **Surprise.** The invalid-input message now mentions U, and the tests compared against the old text word for word. We moved both messages into constants (`GameController.INVALID_MESSAGE`, `NOTHING_TO_UNDO_MESSAGE`) so the tests use the same text as the controller and won't break the next time it changes. |
 
-- **How to load a column into the deque.** Figured out: columns load top to bottom like rows load left to right, and the direction only decides which end we merge and write from.
-- **The [2,2,4,_] → [8,_,_,_] double-merge bug.** Figured out: each tile merges at most once. Tested in both `TileDequeTest` and `GameModelTest`.
-- **Should a move that changes nothing spawn a tile?** Decided: no. `moveTiles` returns false and no tile spawns. Tested in `GameModelTest.testMoveTilesNoChange`.
-- **Clearing the screen.** Partly open: ANSI codes work in real terminals but not in the Eclipse console.
-- <!-- TODO: any other unknowns from the scope doc? -->
+### Did the change cross the model/view line?
+
+Barely, and only through the controller. The controller learned one new model method, `undo()`. The view learned nothing about the model: `ConsoleView` still keeps no copy of the board or score and only prints what the controller hands it. The one view change was the prompt text. The ripple stayed inside the controller's tests, as described above.
+
+### What changed from the D3 plan, and why
+
+- **Undo history uses two stacks, not our `TileDeque`.** The Revised Scope said undo "reuses our deque." `TileDeque` only holds tile values (powers of 2) for one line, so it can't hold whole boards or scores. A plain `ArrayDeque` used as a stack was simpler and kept `TileDeque` unchanged.
+- **Input goes through `ConsoleView.getInput()`, not `InputHandler`.** The D3 spec had both. The controller ended up validating input itself (`processMove`), which made it easy to add U in one place. `InputHandler` and its tests still exist but aren't used by the game. See Next Steps.
+- **Fixed `GameControllerTest`.** It had a stray `public` on the first line and an extra `{ }` at the end, so the project didn't compile. All 26 of its tests pass now.
+- **Added interleaved deque tests.** `TileDequeTest` now mixes adds with removes from both ends and checks the order after every step, including after a merge.
+- **More stretch goals than planned.** We have more time than expected, so endless mode and quit/new game moved from "if time allows" to committed.
 
 ### What doesn't work yet
 
-<!-- TODO: update this right before submitting. -->
-- `GameModel` (Rohan) is not finished, so `GameModelTest` and `GameLauncher` don't compile yet.
-- `GameController` (Matthew) is still an empty class, so the full game can't be played yet.
+- **Screen clearing in Eclipse.** It works in a real terminal; the Eclipse console ignores the clear code.
+- **No way to keep playing after 2048** (endless mode) or to quit/restart mid-game. Both are planned below.
+- **Undo can't be used after the game ends**, because the game loop stops on a win or loss. Endless mode and quit/new game will change the end-of-game flow, so we'll revisit this then.
+- **`InputHandler` is unused**, and its `getInput()` would crash if the input ended, because it doesn't check for the end of the input.
+
+### A design change that would make the next feature cheaper
+
+Undo needed two parallel stacks because the board and score live in separate fields. If `GameModel` kept its state in one small `GameState` object (board + score), undo would be a single stack of states. Endless mode and quit/new game, our next two features, would also get cheaper: "new game" becomes "replace the state," and saving or restoring a game becomes one object instead of several fields. Second, the controller's `if`/`else` chain in `processMove` would be easier to grow as a small map from command letter to action. Quit (Q) and new game (N) would each be one new entry instead of another branch.
 
 ## Next Steps
 
-### What's left to finish the MVP, in order
+### What's left for the final build, in order
 
 | # | Task | Owner |
 |---|---|---|
-| 1 | Write `GameModel`: constructors, `initializeBoard`, `moveTiles` (loop over `tileDeque.processLine`), `generateTile`, `isGameOver`, `isWon`, `getBoard`, `getScore`. Get `GameModelTest` passing. | Rohan |
-| 2 | Write `GameController`: `startGame` loop, `processMove` (validate W/A/S/D, show an error otherwise), `handleMove` (call `moveTiles`, redraw only if it returned true). Stop on win, game over, or `getInput()` returning null. | Matthew |
-| 3 | Decide between `InputHandler` and `ConsoleView.getInput()` and remove the other. | Matthew |
-| 4 | Join everything in `GameLauncher` and play one full game together. | Matthew (all four present) |
-| 5 | Fix bugs found while playing. Each bug goes to the owner of the class. | Everyone |
-
-### One non-trivial feature beyond the MVP: undo
-
-Pressing U puts the board and score back to how they were before the last move.
-
-- **Classes it will touch:**
-  - `GameModel`: add `undo()` and a history of past boards and scores; save the state at the start of `moveTiles` only when the move changes the board.
-  - `GameController`: accept U in `processMove` and call `model.undo()`.
-  - `InputHandler`/`ConsoleView`: allow U, and update the prompt text.
-- **Classes that should not change:** `TileDeque` (moves still work the same way), and `ConsoleView.displayBoard` (it just prints whatever board it gets).
+| 1 | **Endless mode.** On a win, ask "Keep playing? (Y/N)" instead of ending. Touches `GameController.startGame` (the loop condition) and adds a `ConsoleView` prompt. `GameModel` doesn't change. | Matthew |
+| 2 | **Quit / new game.** Q ends the game; N calls `model.initializeBoard()` and redraws. Touches `GameController.processMove` and the prompt text. | Rohan |
+| 3 | **Allow undo after a loss.** Once the game-over flow from #1 and #2 is in, offer "Undo, new game, or quit?" when the board is stuck. | Arrush |
+| 4 | **Clean up input.** Remove `InputHandler` and `InputHandlerTest`, since the controller does all validation, or wire it in. Decide as a group. | Matthew |
+| 5 | **Score display polish.** Show the points gained on each move (e.g. "Score: 120 (+8)"). | Wyatt |
+| 6 | **Tests for the new features.** Controller tests with the fake model for Y/N after a win, Q, and N; model test that `moveTiles` keeps working after `isWon()`. Each owner writes tests for their own feature. | Each owner |
+| 7 | **Final run-through.** Play a full game in a real terminal, check the README, and rehearse the demo. | Everyone |
 
 ### Stretch goals
 
 | Goal | Status | Why |
 |---|---|---|
-| Score display | **Committed** | Mostly done already: the model tracks score and the view has `displayScore`. |
-| Undo | **Committed** | Reuses the existing state and a small history. Planned above. |
-| Endless mode (keep playing after 2048) | **Committed if time allows** | Small: the controller asks whether to continue instead of stopping on a win. |
-| Quit / new game | **Committed if time allows** | Moved out of the MVP in the Revised Scope. `initializeBoard()` already resets the game. |
+| Score display | **Done** | The model tracks the score and the view shows it after every move. |
+| Undo | **Done** | Built this deliverable. |
+| Endless mode | **Committed** | Small: a controller change only. |
+| Quit / new game | **Committed** | Small: `initializeBoard()` already resets everything, including the undo history. |
 | High score file (`ScoreFileHandler`) | **Dropped** | Needs file I/O and error handling for little gameplay value. |
-| Replay | **Dropped** | Cut in the Revised Scope: needs every move saved plus a playback screen. |
+| Replay | **Dropped** | Needs every move saved plus a separate playback screen. Undo covers the useful part. |
 
-### New tests needed
+### The 3-minute demo
 
-- `GameModelTest`:
-  - `undo()` restores the previous board and score.
-  - `undo()` with no history does nothing.
-  - A move that changes nothing doesn't add to the history.
-- `GameModelTest`: `moveTiles` keeps working after `isWon()` is true (endless mode).
-- Controller tests with a fake model: invalid input shows an error and doesn't call `moveTiles`; U calls `undo()`.
+Run `GameLauncher` in a real terminal (not Eclipse) so the screen clears.
+
+| Time | What we show |
+|---|---|
+| 0:00–0:30 | Start the game. Explain the controls and the MVC split in one sentence each. |
+| 0:30–1:00 | Bad input: `p`, an empty line, and `wa` each show an error and don't change the board. A move that changes nothing doesn't add a tile. |
+| 1:00–1:45 | Normal play: a few moves with merges, with the score going up. |
+| 1:45–2:25 | **Undo (new feature):** U before any move says "Nothing to undo yet." Then make a merge, press U, and the board, score and new tile all go back. Press U twice to step back two moves. |
+| 2:25–3:00 | Run the JUnit tests (112 passing) and show the undo tests, including the one that undoes a winning merge, since reaching 2048 live takes too long. |
 
 ## Work Attribution
 
 | File | Team member(s) | Contribution (how) | GenAI note |
 |---|---|---|---|
 | `TileDeque.java` | Arrush | Wrote it, including the row/column helper (`loadLine`, `writeLine`, `processLine`) | Written with Claude (Claude Code) from our spec, then reviewed and tested |
-| `TileDequeTest.java` | Arrush | Wrote the tests from the Test Plan plus the helper tests | Written with Claude (Claude Code) from our Test Plan |
-| `GameModelTest.java` | Arrush | Wrote the tests from the Test Plan | Written with Claude (Claude Code) from our Test Plan; checked against a temporary GameModel written to the spec |
-| `GameModel.java` | Rohan | Wrote the class refrencing the test plan | got assistance from GPT in making the class from our spec. |
-| `ConsoleView.java` | Wyatt | <!-- TODO: e.g. reviewed and revised --> | Written with Claude (Claude Code) from our spec |
-| `ConsoleViewTest.java` | Wyatt | <!-- TODO --> | Written with Claude (Claude Code) |
-| `ConsoleViewDemo.java` | Wyatt | <!-- TODO --> | Written with Claude (Claude Code) |
-| `GameController.java` | Rohan | Wrote the class refrencing the test plan | got assistance from GPT in makign the class from our spec |
-| `GameLauncher.java` | Matthew | Wrote GameLauncher class based on spec from deliverable 2 | No GenAI used|
-| `InputHandler.java` | Matthew | Wrote InputHandler class  | No GenAI used |
-| `InputHandlerTest.java` | Matthew | Wrote InputHandlerTest class w/chatGPT | Written by ChatGPT |
-| `README.md` | Arrush | Drafted it; teammates fill in their own rows | Drafted with Claude (Claude Code), then edited |
-
-
-### Reflection
-**How did your design absorb the change?**
-- Not much changed between deliverables this week. Our group went above and beyond for prototype 1 to the point that the only thing missing for prototype 2 was a single test class, which our design had no problem absorbing.
-
-**Did the change cross the model/view line? Did the view have to learn anything new about the model?** 
-- The MVC line is the same as it was before, and knows the same amount.
-
-**What changed from your D3 plan? Features, signatures, validation, or tests that differ from what you said you'd do, and why.**
-- We currently plan to implement more stretch goals than we initially planned, such as undo and endless mode, as we have more time on our hands than anticipated.
-
-**What doesn't work yet? MVP features, bad-input cases, or tests that are missing or failing.**
-- The only core MVP feature inactive that we're currently aware of is the console clearing after each move, which should be relatively simple. Beyond that, all we need to do is implement stretch goals.
-
-### Next Steps
-**What's left**
-- Most of what's left constitutes stretch goals, with the exception of console clearing. We will use the week to polish and upgrade our current MVP.
-
-**Stretch goals**
-- Score display: Committed
-- Undo: Committed
-- Endless mode: Committed
-- Quit/new game: Committed
-- High score file: Dropped
-- Replay: Dropped
-
-**Demo**
-The first minute of our demo will show the basics of the game as well as how bad input is handled, followed by a minute of normal gameplay to show the game running, while showing coverage for situations like making a move that doesn't do anything. We will wrap up in the third minute by showing the lose condition and replay features.
-
-**Who does what**
-Endless mode/Console clearing - Matthew
-Score display - Wyatt
-Quit/new game - Rohan
-Undo - Arrush
+| `TileDequeTest.java` | Arrush | Wrote the Test Plan tests, the helper tests, and (D4) the interleaved add/remove tests | Written with Claude (Claude Code) from our Test Plan |
+| `GameModel.java` | Rohan; Arrush (undo) | Rohan wrote the class from the test plan. Arrush added `undo()`, `canUndo()` and the undo history for D4. | Rohan: got help from ChatGPT making the class from our spec. Arrush: undo written with Claude (Claude Code). |
+| `GameModelTest.java` | Arrush | Wrote the Test Plan tests and (D4) the undo tests | Written with Claude (Claude Code); first checked against a temporary GameModel written to the spec, now run against Rohan's GameModel |
+| `GameController.java` | Rohan; Arrush (undo) | Rohan wrote the class from the test plan. Arrush added the U command, `handleUndo()`, and the message constants for D4. | Rohan: got help from ChatGPT making the class from our spec. Arrush: undo written with Claude (Claude Code). |
+| `GameControllerTest.java` | Rohan; Arrush (undo, fix) | Rohan wrote the tests with a fake model and fake view. Arrush fixed the compile errors and added the undo tests. | Rohan: <!-- TODO (Rohan): was GenAI used? --> Arrush: written with Claude (Claude Code). |
+| `ConsoleView.java` | Arrush, for Wyatt's part | Written for Wyatt's part of the plan; Arrush updated the prompt for undo | Written with Claude (Claude Code) from our spec. <!-- TODO (Wyatt): add if you reviewed or revised it --> |
+| `ConsoleViewTest.java` | Arrush, for Wyatt's part | Written for Wyatt's part of the plan | Written with Claude (Claude Code). <!-- TODO (Wyatt) --> |
+| `ConsoleViewDemo.java` | Arrush, for Wyatt's part | Written for Wyatt's part of the plan | Written with Claude (Claude Code). <!-- TODO (Wyatt) --> |
+| `GameLauncher.java` | Matthew | Wrote the GameLauncher class from the D2 spec | No GenAI used |
+| `InputHandler.java` | Matthew | Wrote the InputHandler class | No GenAI used |
+| `InputHandlerTest.java` | Matthew | Wrote the InputHandlerTest class with ChatGPT | Written by ChatGPT |
+| `README.md` | Arrush; <!-- TODO: name of GitHub user asu127 --> | Arrush drafted it and rewrote the D4 Reflection and Next Steps around the undo feature. <!-- TODO: name --> wrote the first D4 Reflection, Next Steps, demo plan and feature owners, which this version builds on. | Arrush's parts drafted with Claude (Claude Code), then edited |

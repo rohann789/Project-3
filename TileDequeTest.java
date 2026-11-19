@@ -184,6 +184,71 @@ public class TileDequeTest
 
 
     // ----------------------------------------------------------
+    // Interleaved adds and removes
+    // ----------------------------------------------------------
+
+    /**
+     * Normal: mixing adds with removes from both ends keeps the order
+     * correct at every step.
+     */
+    public void testInterleavedAddsAndRemoves()
+    {
+        addAll(2, 4);                                   // [2, 4]
+        assertEquals(2, (int)deque.removeTile());       // [4]
+        addAll(8);                                      // [4, 8]
+        assertEquals(4, (int)deque.peekTile());
+        addAll(16);                                     // [4, 8, 16]
+        assertEquals(16, (int)deque.removeLastTile());  // [4, 8]
+        addAll(32, 64);                                 // [4, 8, 32, 64]
+        assertEquals(4, (int)deque.removeTile());       // [8, 32, 64]
+        assertEquals(64, (int)deque.removeLastTile());  // [8, 32]
+        assertArray(new int[] { 8, 32 }, contents());
+        assertEquals(8, (int)deque.removeTile());       // [32]
+        assertEquals(32, (int)deque.removeLastTile());  // []
+        assertTrue(deque.isEmpty());
+        addAll(2);                                      // reuse after empty
+        assertEquals(2, (int)deque.peekTile());
+    }
+
+
+    /**
+     * Normal: removes after a merge come out in the merged order, and new
+     * tiles go behind them.
+     */
+    public void testInterleavedAfterMerge()
+    {
+        addAll(2, 2, 4);
+        deque.mergeTiles(true);                         // [4, 4]
+        assertEquals(4, (int)deque.removeTile());       // [4]
+        addAll(8);                                      // [4, 8]
+        assertEquals(8, (int)deque.removeLastTile());   // [4]
+        assertEquals(4, (int)deque.removeTile());       // []
+        assertTrue(deque.isEmpty());
+    }
+
+
+    /**
+     * Bad input: removing past empty in the middle of a sequence throws,
+     * and the deque still works afterward.
+     */
+    public void testInterleavedRemovePastEmpty()
+    {
+        addAll(2);
+        deque.removeLastTile();
+        try
+        {
+            deque.removeTile();
+            fail("Expected NoSuchElementException");
+        }
+        catch (NoSuchElementException e)
+        {
+            addAll(4);
+            assertEquals(4, (int)deque.removeTile());
+        }
+    }
+
+
+    // ----------------------------------------------------------
     // peekTile()
     // ----------------------------------------------------------
 

@@ -1,4 +1,5 @@
 
+import java.util.ArrayDeque;
 import java.util.Random;
 
 /**
@@ -18,6 +19,10 @@ public class GameModel {
     private Random random;
     private TileDeque tileDeque;
 
+    // Undo history: boards and scores from before each move, newest on top.
+    private ArrayDeque<int[][]> boardHistory;
+    private ArrayDeque<Integer> scoreHistory;
+
     /**
      * Creates a new empty game model.
      */
@@ -28,6 +33,8 @@ public class GameModel {
         won = false;
         random = new Random();
         tileDeque = new TileDeque();
+        boardHistory = new ArrayDeque<int[][]>();
+        scoreHistory = new ArrayDeque<Integer>();
     }
 
     /**
@@ -80,6 +87,8 @@ public class GameModel {
         won = false;
 
         tileDeque.clear();
+        boardHistory.clear();
+        scoreHistory.clear();
 
         generateTile();
         generateTile();
@@ -107,6 +116,7 @@ public class GameModel {
         }
 
         int[][] oldBoard = getBoard();
+        int oldScore = score;
 
         // Process each row or column.
         for (int i = 0; i < 4; i++) {
@@ -124,8 +134,10 @@ public class GameModel {
             }
         }
 
-        // Only generate a tile after a valid move.
+        // Only generate a tile and save undo history after a valid move.
         if (changed) {
+            boardHistory.push(oldBoard);
+            scoreHistory.push(oldScore);
             generateTile();
         }
 
@@ -133,6 +145,35 @@ public class GameModel {
         gameOver = checkGameOver();
 
         return changed;
+    }
+
+    /**
+     * Puts the board and score back to how they were before the last move
+     * that changed the board. Can be called repeatedly to step further
+     * back. A move that changed nothing is never recorded, so it can't be
+     * undone.
+     *
+     * @return true if a move was undone, false if there was nothing to undo
+     */
+    public boolean undo() {
+        if (boardHistory.isEmpty()) {
+            return false;
+        }
+
+        board = boardHistory.pop();
+        score = scoreHistory.pop();
+        won = checkWon();
+        gameOver = checkGameOver();
+        return true;
+    }
+
+    /**
+     * Returns whether there is a move that undo() can take back.
+     *
+     * @return true if undo() would change the board
+     */
+    public boolean canUndo() {
+        return !boardHistory.isEmpty();
     }
 
     /**

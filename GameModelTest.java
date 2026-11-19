@@ -460,4 +460,158 @@ public class GameModelTest
         assertFalse(game.moveTiles("A"));
         assertEquals(0, game.getScore());
     }
+
+
+    // ----------------------------------------------------------
+    // undo() and canUndo() (D4 change feature)
+    // ----------------------------------------------------------
+
+    /**
+     * Normal: undo puts back the exact board and score from before the
+     * move, including removing the tile that spawned.
+     */
+    public void testUndo()
+    {
+        int[][] start = empty();
+        start[0] = new int[] { 2, 2, 4, 0 };
+        GameModel game = model(start);
+        assertTrue(game.moveTiles("A"));
+        assertEquals(4, game.getScore());
+
+        assertTrue(game.undo());
+        assertBoard(start, game.getBoard());
+        assertEquals(0, game.getScore());
+    }
+
+
+    /**
+     * Normal: several undos step back one move at a time, newest first.
+     */
+    public void testUndoSeveralMoves()
+    {
+        int[][] start = empty();
+        start[0] = new int[] { 2, 2, 0, 0 };
+        GameModel game = model(start);
+
+        assertTrue(game.moveTiles("A"));
+        int[][] afterFirst = game.getBoard();
+        int scoreAfterFirst = game.getScore();
+        assertTrue(game.moveTiles("S"));
+
+        assertTrue(game.undo());
+        assertBoard(afterFirst, game.getBoard());
+        assertEquals(scoreAfterFirst, game.getScore());
+
+        assertTrue(game.undo());
+        assertBoard(start, game.getBoard());
+        assertEquals(0, game.getScore());
+
+        assertFalse(game.undo());
+    }
+
+
+    /**
+     * Bad input: undo before any move returns false and changes nothing.
+     */
+    public void testUndoNothingToUndo()
+    {
+        int[][] start = empty();
+        start[1][1] = 8;
+        GameModel game = model(start);
+        assertFalse(game.canUndo());
+        assertFalse(game.undo());
+        assertBoard(start, game.getBoard());
+        assertEquals(0, game.getScore());
+    }
+
+
+    /**
+     * Bad input: a move that changes nothing isn't recorded, so undo
+     * after it still has nothing to undo.
+     */
+    public void testUndoIgnoresNoChangeMove()
+    {
+        int[][] start = empty();
+        start[0][0] = 2;
+        GameModel game = model(start);
+        assertFalse(game.moveTiles("A"));
+        assertFalse(game.canUndo());
+        assertFalse(game.undo());
+    }
+
+
+    /**
+     * Bad input: an invalid direction isn't recorded either.
+     */
+    public void testUndoIgnoresInvalidDirection()
+    {
+        GameModel game = model(empty());
+        try
+        {
+            game.moveTiles("P");
+            fail("Expected IllegalArgumentException");
+        }
+        catch (IllegalArgumentException e)
+        {
+            assertFalse(game.canUndo());
+        }
+    }
+
+
+    /**
+     * Normal: starting a new game clears the undo history.
+     */
+    public void testInitializeBoardClearsUndo()
+    {
+        int[][] start = empty();
+        start[0] = new int[] { 2, 2, 0, 0 };
+        GameModel game = model(start);
+        assertTrue(game.moveTiles("A"));
+        assertTrue(game.canUndo());
+
+        game.initializeBoard();
+        assertFalse(game.canUndo());
+        assertFalse(game.undo());
+    }
+
+
+    /**
+     * Normal: undoing the winning merge also undoes the win, and the
+     * player can make a different move afterward.
+     */
+    public void testUndoWinThenMoveAgain()
+    {
+        int[][] start = empty();
+        start[0][0] = 1024;
+        start[0][1] = 1024;
+        GameModel game = model(start);
+        assertTrue(game.moveTiles("A"));
+        assertTrue(game.isWon());
+
+        assertTrue(game.undo());
+        assertFalse(game.isWon());
+        assertBoard(start, game.getBoard());
+
+        assertTrue(game.moveTiles("S"));
+        assertEquals(1024, game.getBoard()[3][0]);
+    }
+
+
+    /**
+     * Normal: on a nearly full board, undo restores the exact board and
+     * the game is not over afterward.
+     */
+    public void testUndoNearlyFullBoard()
+    {
+        int[][] start = stuckBoard();
+        start[3][3] = 0;
+        start[3][2] = 2; // row 3 is now [4, 2, 2, 0]
+        GameModel game = model(start);
+        assertFalse(game.isGameOver());
+
+        assertTrue(game.moveTiles("D"));
+        assertTrue(game.undo());
+        assertBoard(start, game.getBoard());
+        assertFalse(game.isGameOver());
+    }
 }

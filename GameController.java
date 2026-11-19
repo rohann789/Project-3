@@ -8,6 +8,13 @@
  */
 public class GameController {
 
+    /** Shown when the player types something other than W, A, S, D, or U. */
+    public static final String INVALID_MESSAGE =
+        "Invalid move. Please enter W, A, S, D, or U to undo.";
+    /** Shown when the player presses U before making any move. */
+    public static final String NOTHING_TO_UNDO_MESSAGE =
+        "Nothing to undo yet.";
+
     private GameModel model;
     private ConsoleView view;
 
@@ -35,7 +42,8 @@ public class GameController {
         model.initializeBoard();
 
         view.displayMessage("Welcome to 2048!");
-        view.displayMessage("Use W, A, S, D to move tiles.");
+        view.displayMessage(
+            "Use W, A, S, D to move tiles. Enter U to undo your last move.");
 
         displayGame();
 
@@ -77,9 +85,24 @@ public class GameController {
             || direction.equals("S") || direction.equals("D")) {
             handleMove(direction);
         }
+        else if (direction.equals("U")) {
+            handleUndo();
+        }
         else {
-            view.displayMessage(
-                "Invalid move. Please enter W, A, S, or D.");
+            view.displayMessage(INVALID_MESSAGE);
+        }
+    }
+
+    /**
+     * Undoes the last move and redraws the board, or tells the player
+     * there is nothing to undo.
+     */
+    public void handleUndo() {
+        if (model.undo()) {
+            displayGame();
+        }
+        else {
+            view.displayMessage(NOTHING_TO_UNDO_MESSAGE);
         }
     }
 

@@ -1,4 +1,3 @@
-public 
 import student.TestCase;
 
 /**
@@ -121,7 +120,7 @@ public class GameControllerTest extends TestCase {
 
         assertEquals(0, model.moveCount);
         assertEquals(
-            "Invalid move. Please enter W, A, S, or D.",
+            GameController.INVALID_MESSAGE,
             view.lastMessage);
     }
 
@@ -133,7 +132,7 @@ public class GameControllerTest extends TestCase {
 
         assertEquals(0, model.moveCount);
         assertEquals(
-            "Invalid move. Please enter W, A, S, or D.",
+            GameController.INVALID_MESSAGE,
             view.lastMessage);
     }
 
@@ -145,7 +144,7 @@ public class GameControllerTest extends TestCase {
 
         assertEquals(0, model.moveCount);
         assertEquals(
-            "Invalid move. Please enter W, A, S, or D.",
+            GameController.INVALID_MESSAGE,
             view.lastMessage);
     }
 
@@ -167,7 +166,7 @@ public class GameControllerTest extends TestCase {
 
         assertEquals(0, model.moveCount);
         assertEquals(
-            "Invalid move. Please enter W, A, S, or D.",
+            GameController.INVALID_MESSAGE,
             view.lastMessage);
     }
 
@@ -307,6 +306,83 @@ public class GameControllerTest extends TestCase {
         assertEquals("Game ended.", view.lastMessage);
     }
 
+    // ----------------------------------------------------------
+    // Undo (D4 change feature)
+    // ----------------------------------------------------------
+
+    /**
+     * Normal: U calls undo() on the model and redraws the board and score,
+     * without making a move.
+     */
+    public void testUndoCommand() {
+        model.undoResult = true;
+        model.score = 12;
+
+        controller.processMove("U");
+
+        assertEquals(1, model.undoCount);
+        assertEquals(0, model.moveCount);
+        assertEquals(1, view.clearCount);
+        assertEquals(1, view.boardCount);
+        assertEquals(12, view.lastScore);
+    }
+
+    /**
+     * Normal: lowercase u and spaces around it work too.
+     */
+    public void testUndoLowercase() {
+        model.undoResult = true;
+
+        controller.processMove("  u ");
+
+        assertEquals(1, model.undoCount);
+        assertEquals(1, view.boardCount);
+    }
+
+    /**
+     * Bad input: U with nothing to undo shows a message and doesn't
+     * redraw or crash.
+     */
+    public void testUndoNothingToUndo() {
+        model.undoResult = false;
+
+        controller.processMove("U");
+
+        assertEquals(1, model.undoCount);
+        assertEquals(0, view.boardCount);
+        assertEquals(0, view.clearCount);
+        assertEquals(GameController.NOTHING_TO_UNDO_MESSAGE,
+            view.lastMessage);
+    }
+
+    /**
+     * Bad input: U followed by other text is rejected like any other
+     * invalid command and doesn't call undo().
+     */
+    public void testUndoWithExtraText() {
+        controller.processMove("undo");
+
+        assertEquals(0, model.undoCount);
+        assertEquals(0, model.moveCount);
+        assertEquals(GameController.INVALID_MESSAGE, view.lastMessage);
+    }
+
+    /**
+     * Normal: undo works inside the game loop and the game keeps going.
+     */
+    public void testUndoDuringGame() {
+        model.undoResult = true;
+        view.nextInput = "u";
+
+        controller.startGame();
+
+        assertEquals(1, model.undoCount);
+        assertEquals(0, model.moveCount);
+        // One draw at the start, one after the undo.
+        assertEquals(2, view.boardCount);
+        assertEquals("Game ended.", view.lastMessage);
+    }
+
     /**
      * Fake model used to control test outcomes.
      */
@@ -321,10 +397,18 @@ public class GameControllerTest extends TestCase {
         private int moveCount;
         private int score;
         private String lastDirection;
+        private boolean undoResult;
+        private int undoCount;
 
         @Override
         public void initializeBoard() {
             initialized = true;
+        }
+
+        @Override
+        public boolean undo() {
+            undoCount++;
+            return undoResult;
         }
 
         @Override
@@ -419,7 +503,4 @@ public class GameControllerTest extends TestCase {
             return result;
         }
     }
-}
- {
-    
 }
