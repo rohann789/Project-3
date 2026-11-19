@@ -130,4 +130,37 @@ Pressing U puts the board and score back to how they were before the last move.
 | `GameController.java` | Rohan | Wrote the class refrencing the test plan | got assistance from GPT in makign the class from our spec |
 | `GameLauncher.java` | Matthew | Wrote GameLauncher class based on spec from deliverable 2 | No GenAI used|
 | `InputHandler.java` | Matthew | Wrote InputHandler class  | No GenAI used |
+| `InputHandlerTest.java` | Matthew | Wrote InputHandlerTest class w/chatGPT | Written by ChatGPT |
 | `README.md` | Arrush | Drafted it; teammates fill in their own rows | Drafted with Claude (Claude Code), then edited |
+
+
+### Reflection
+**How did your design absorb the change?**
+Not much changed between deliverables this week. Our group went above and beyond for prototype 1 to the point that the only thing missing for prototype 2 was a single test class, which our design had no problem absorbing.
+**Did the change cross the model/view line? Did the view have to learn anything new about the model?** 
+The MVC line is the same as it was before, and knows the same amount.
+**What changed from your D3 plan? Features, signatures, validation, or tests that differ from what you said you'd do, and why.**
+We currently plan to implement more stretch goals than we initially planned, such as undo and endless mode, as we have more time on our hands than anticipated.
+**What doesn't work yet? MVP features, bad-input cases, or tests that are missing or failing.**
+The only core MVP feature inactive that we're currently aware of is the console clearing after each move, which should be relatively simple. Beyond that, all we need to do is implement stretch goals.
+
+### Next Steps
+**What's left**
+- Most of what's left constitutes stretch goals, with the exception of console clearing. We will use the week to polish and upgrade our current MVP.
+
+**Stretch goals**
+- Score display: Committed
+- Undo: Committed
+- Endless mode: Committed
+- Quit/new game: Committed
+- High score file: Dropped
+- Replay: Dropped
+
+**Demo**
+The first minute of our demo will show the basics of the game as well as how bad input is handled, followed by a minute of normal gameplay to show the game running, while showing coverage for situations like making a move that doesn't do anything. We will wrap up in the third minute by showing the lose condition and replay features.
+
+**Who does what**
+Endless mode/Console clearing - Matthew
+Score display - Wyatt
+Quit/new game - Rohan
+Undo - Arrush
